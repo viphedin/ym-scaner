@@ -1,0 +1,9 @@
+{
+    "url": "https://market.yandex.ru/",
+    "browsers": 3,
+    "port": 3000,
+    "login": "test",
+    "password": "test",
+    "access_ips": [],
+    "debug": true
+}

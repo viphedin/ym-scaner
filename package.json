@@ -4,6 +4,8 @@
   "main": "src/app.js",
   "dependencies": {
     "express": "^4.17.1",
+    "express-basic-auth": "^1.2.0",
+    "express-ipfilter": "^1.1.1",
     "puppeteer": "^2.0.0",
     "puppeteer-cluster": "^0.18.0"
   },

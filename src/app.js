@@ -1,27 +1,35 @@
 const app = require('express')();
+const basicAuth = require('express-basic-auth');
+const ipfilter = require('express-ipfilter').IpFilter;
+const IpDeniedError = require('express-ipfilter').IpDeniedError;
 const http = require('http').createServer(app);
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const path = require('path');
 
-const baseUrl = 'https://market.yandex.ru/';
+const config = require(path.resolve(__dirname, '../config.json'));
+
+console.log(config);
+
+const baseUrl = config.url;
 
 let STORAGE = [];
 
 let BROWSERS = [];
 
-const BROWSERS_COUNT = 3;
+const BROWSERS_COUNT = config.browsers;
 
 async function ymSearch(query, num, key) {
   let browser = await getBrowser(num);
 
-  let prefix = 'log/' + key + '_';
+  let prefix = path.resolve(__dirname, '../logs') + '/' + key + '_';
 
   const page = browser.page;
 
   let bodyHTML = '';
 
   try {
-    await page.screenshot({path: prefix + 'page0.png', fullPage: true});
+    //await page.screenshot({path: prefix + 'page0.png', fullPage: true});
     
     await page.type('#header-search', query);
 
@@ -47,7 +55,7 @@ async function ymSearch(query, num, key) {
         console.log("empty page.")
       }
 
-      //await page.screenshot({path: prefix + 'market2.png'});
+      await page.screenshot({path: prefix + 'results.png'});
 
       bodyHTML += await page.evaluate(() => document.body.innerHTML);
 
@@ -100,27 +108,33 @@ function save(filename, html) {
   });
 }
 
-app.get('/proxies', function(req, res) {
-  res.json({
-    count: BROWSERS.length
-  });
-});
+if (config.access_ips.length) {
+  console.log(config.access_ips);
+  app.use(
+    ipfilter(config.access_ips, {
+      mode: 'allow'
+    })
+  );
+}
 
-app.get('/proxy', function(req, res) {
-  let result = {
-    error: false
-  };
+if (config.login && config.password) {
+  let users = {};
+  users[config.login] = config.password;
 
-  try {
-    const proxy = req.query.proxy;
+  app.use(basicAuth({
+    users: users,
+    challenge: true,
+    realm: 'YM'
+  }));
+}
 
-    getBrowser(proxy);
-  } catch (error) {
-    result.error = true;
+app.use((err, req, res, next) => {
+  if (err instanceof IpDeniedError) {
+    res.status(403).end('forbidden');
+  } else {
+    next();
   }
-
-  res.json(result);
-});
+})
 
 app.get('/run', function(req, res) {
     let result = {
@@ -338,15 +352,10 @@ async function getBrowser(num) {
     await page.click('div.region-suggest__list-item:first-child');
 
     await page.click('button.region-select-form__continue-with-new');
-    await page.screenshot({path: prefix + 'popup1.png', fullPage: true});
-
-//    await page.waitForNavigation();
   } catch (error) {
     console.log('error: ' + error.name);
     console.log('Ошибка ' + error.name + ":" + error.message + "\n" + error.stack);
   }
-
-  await page.screenshot({path: prefix + 'popup2.png', fullPage: true});
 
   console.log('done');
 
@@ -367,6 +376,6 @@ async function initBrowsers() {
 
 initBrowsers();
 
-http.listen(3000, function() {
+http.listen(config.port, function() {
   console.log('listening on *:3000');
 });
