@@ -31,7 +31,9 @@ async function ymSearch(query, num, key) {
   try {
     //await page.screenshot({path: prefix + 'page0.png', fullPage: true});
     
-    await page.type('#header-search', query);
+    const input = await page.$('#header-search');
+    await input.click({ clickCount: 3 })
+    await input.type(query);
 
     //await page.screenshot({path: prefix + 'market1.png'});
 
