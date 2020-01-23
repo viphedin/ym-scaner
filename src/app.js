@@ -57,7 +57,9 @@ async function ymSearch(query, num, key) {
         console.log("empty page.")
       }
 
-      await page.screenshot({path: prefix + 'results.png'});
+      if (config.debug) {
+        await page.screenshot({path: prefix + 'results.png'});
+      }
 
       bodyHTML += await page.evaluate(() => document.body.innerHTML);
 
