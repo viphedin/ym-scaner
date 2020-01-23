@@ -166,7 +166,6 @@ app.get('/run', function(req, res) {
 
           ymSearch(query, num, key).then(
             (html) => {
-              console.log(storage);
               storage.html = html;
               storage.time = new Date()
             }
@@ -240,14 +239,32 @@ app.get('/isfree', function (req, res) {
 
 app.get('/stop', function(req, res) {
   for (let i in BROWSERS) {
-    console.log('stoping browser ' + i);
+    console.log('stop browser');
     BROWSERS[i].browser.close();
+    break;
   }
 
   res.json({status: 'done'});
 
   console.log('ready to stop');
   http.close();
+});
+
+app.get('/restart', function(req, res) {
+  for (let i in BROWSERS) {
+    console.log('stop browser');
+    BROWSERS[i].browser.close();
+    break;
+  }
+
+  BROWSERS = [];
+  STORAGE = [];
+
+  initBrowsers();
+
+  res.json({status: 'done'});
+
+  console.log('restarted');
 });
 
 function getFreeBrowser() {
