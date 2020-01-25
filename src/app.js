@@ -19,6 +19,8 @@ let BROWSERS = [];
 
 const BROWSERS_COUNT = config.browsers;
 
+let lastFreeTime = new Date();
+
 async function ymSearch(query, num, key) {
   let browser = await getBrowser(num);
 
@@ -83,6 +85,8 @@ async function ymSearch(query, num, key) {
   }
 
   browser.free = true;
+
+  lastFreeTime = new Date();
 
   return bodyHTML;
 }
@@ -233,40 +237,52 @@ app.get('/get', function(req, res) {
 });
 
 app.get('/isfree', function (req, res) {
-  console.log('isfree', getFreeBrowser());
+  let free = getFreeBrowser() == null ? false : true;
+
+  if (free) {
+    lastFreeTime = new Date();
+  } else {
+    let time = new Date();
+    time.setMinutes(time.getMinutes() - 5);
+
+    if (time > lastFreeTime) {
+      closeBrowsers().then(
+        () => {
+          initBrowsers();
+        }
+      )
+    }
+  }
+
+  console.log('isfree', free);
   res.json({
-    free: getFreeBrowser() == null ? false : true
+    free: free
   });
 });
 
 app.get('/stop', function(req, res) {
-  for (let i in BROWSERS) {
-    console.log('stop browser');
-    BROWSERS[i].browser.close();
-    break;
-  }
+  closeBrowsers().then(
+    () => {
 
-  res.json({status: 'done'});
+      res.json({status: 'done'});
 
-  console.log('ready to stop');
-  http.close();
+      console.log('ready to stop');
+      http.close();   
+    }
+  )
 });
 
 app.get('/restart', function(req, res) {
-  for (let i in BROWSERS) {
-    console.log('stop browser');
-    BROWSERS[i].browser.close();
-    break;
-  }
+  closeBrowsers().then(
+    () => {
+      STORAGE = [];
+      initBrowsers();
 
-  BROWSERS = [];
-  STORAGE = [];
+      res.json({status: 'done'});
 
-  initBrowsers();
-
-  res.json({status: 'done'});
-
-  console.log('restarted');
+      console.log('restarted');
+    }
+  );
 });
 
 function getFreeBrowser() {
@@ -393,6 +409,16 @@ async function initBrowsers() {
   for (let i = 1; i <= BROWSERS_COUNT; i++) {
     await getBrowser(i);
   }
+}
+
+async function closeBrowsers() {
+  for (let i in BROWSERS) {
+    console.log('stop browser');
+    BROWSERS[i].browser.close();
+    break;
+  }
+
+  BROWSERS = [];
 }
 
 initBrowsers();
