@@ -245,12 +245,13 @@ app.get('/isfree', function (req, res) {
     let time = new Date();
     time.setMinutes(time.getMinutes() - 5);
 
+
     if (time > lastFreeTime) {
-      closeBrowsers().then(
-        () => {
-          initBrowsers();
-        }
-      )
+      res.json({
+        free: false
+      });
+
+      process.exit();
     }
   }
 
@@ -267,22 +268,14 @@ app.get('/stop', function(req, res) {
       res.json({status: 'done'});
 
       console.log('ready to stop');
-      http.close();   
+      http.close();
     }
   )
 });
 
 app.get('/restart', function(req, res) {
-  closeBrowsers().then(
-    () => {
-      STORAGE = [];
-      initBrowsers();
-
-      res.json({status: 'done'});
-
-      console.log('restarted');
-    }
-  );
+  res.json({status: 'done'});
+  process.exit();
 });
 
 function getFreeBrowser() {
@@ -414,8 +407,8 @@ async function initBrowsers() {
 async function closeBrowsers() {
   for (let i in BROWSERS) {
     console.log('stop browser');
-    BROWSERS[i].browser.close();
-    break;
+    await BROWSERS[i].browser.close();
+    //break;
   }
 
   BROWSERS = [];
