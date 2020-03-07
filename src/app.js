@@ -28,11 +28,19 @@ async function ymSearch(query, num, key) {
 
   const page = browser.page;
 
+  let category = '';
+  let match = query.match(/\[\:(.+)\:\]/);
+
+  if (match) {
+    category = match[1];
+    query = query.replace(/\[\:.+\:\]/, '');
+  }
+
   let bodyHTML = '';
 
   try {
     //await page.screenshot({path: prefix + 'page0.png', fullPage: true});
-    
+
     const input = await page.$('#header-search');
     await input.click({ clickCount: 3 })
     await input.type(query);
@@ -68,6 +76,23 @@ async function ymSearch(query, num, key) {
       try {
         await page.waitForSelector('a.n-pager__button-next', { timeout: 1000 });
         await page.click('a.n-pager__button-next');
+
+        if (category) {
+          try {
+            const linkHandlers = await page.$x('//div[contains(text(), "' + category + '")]');
+
+            if (linkHandlers.length > 0) {
+              await linkHandlers[0].click();
+              console.log('category selected');
+            } else {
+              throw new Error("Link not found");
+            }
+
+            await page.waitForSelector('h3.n-snippet-card2__title', { timeout: 2000 });
+          } catch (error) {
+            console.log("category not clicked", error);
+          }
+        }
 
         //await page.screenshot({path: prefix + 'market3.png'});
 
@@ -202,7 +227,7 @@ app.get('/get', function(req, res) {
 
     try {
       const key = req.query.key;
-     
+
       console.log('get ' + key);
 
       if (key) {
@@ -300,21 +325,16 @@ async function getBrowser(num) {
     const page = await BROWSERS[1].browser.newPage();
 
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/79.0.3945.88 Safari/537.36');
-  
+
     try {
       await page.goto(baseUrl);
-  
+
       await page.waitForSelector('span.region-form-opener span.header2-menu__text', { timeout: 20000 });
     } catch (error) {
-      if (error.name == 'TimeoutError') {
-        return null;
-      }
-      console.log('error: ' + error.name);
-      if (error.message.match(/ERR_CONNECTION/)) {
-        return null;
-      }
+      await BROWSERS[1].browser.close();
+      process.exit();
     }
-  
+
     BROWSERS[num] = {
       browser: BROWSERS[1].browser,
       page: page,
@@ -329,10 +349,8 @@ async function getBrowser(num) {
   console.log('create browser ' + num);
 
   let args = [
-/*
     '--no-sandbox',
     '--disable-setuid-sandbox',
-*/
     '--disable-features=site-per-process',
     '--ignore-certificate-errors',
   ];
