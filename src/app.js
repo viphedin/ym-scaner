@@ -62,9 +62,26 @@ async function ymSearch(query, num, key) {
       }
 
       try {
-        await page.waitForSelector('h3.n-snippet-card2__title', { timeout: 1000 });
+        await page.waitForSelector('h3.n-snippet-card2__title', { timeout: 3000 });
       } catch (error) {
         console.log("empty page.")
+      }
+
+      if (category) {
+        try {
+          const linkHandlers = await page.$x('//div[contains(text(), "' + category + '")]');
+
+          if (linkHandlers.length > 0) {
+            await linkHandlers[0].click();
+            console.log('category selected');
+          } else {
+            throw new Error("Link not found");
+          }
+
+          await page.waitForSelector('h3.n-snippet-card2__title', { timeout: 2000 });
+        } catch (error) {
+          console.log("category not clicked", error);
+        }
       }
 
       if (config.debug) {
@@ -77,22 +94,6 @@ async function ymSearch(query, num, key) {
         await page.waitForSelector('a.n-pager__button-next', { timeout: 1000 });
         await page.click('a.n-pager__button-next');
 
-        if (category) {
-          try {
-            const linkHandlers = await page.$x('//div[contains(text(), "' + category + '")]');
-
-            if (linkHandlers.length > 0) {
-              await linkHandlers[0].click();
-              console.log('category selected');
-            } else {
-              throw new Error("Link not found");
-            }
-
-            await page.waitForSelector('h3.n-snippet-card2__title', { timeout: 2000 });
-          } catch (error) {
-            console.log("category not clicked", error);
-          }
-        }
 
         //await page.screenshot({path: prefix + 'market3.png'});
 
@@ -435,5 +436,5 @@ async function closeBrowsers() {
 initBrowsers();
 
 http.listen(config.port, function() {
-  console.log('listening on *:3000');
+  console.log('listening on *:' + config.port);
 });
