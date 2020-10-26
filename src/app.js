@@ -62,7 +62,7 @@ async function ymSearch(query, num, key) {
       }
 
       try {
-        await page.waitForSelector('h3.n-snippet-card2__title', { timeout: 3000 });
+        await page.waitForSelector('article._1_IxNTwqll._1JtmTvRG7Z', { timeout: 3000 });
       } catch (error) {
         console.log("empty page.")
       }
@@ -78,13 +78,13 @@ async function ymSearch(query, num, key) {
             throw new Error("Link not found");
           }
 
-          await page.waitForSelector('h3.n-snippet-card2__title', { timeout: 2000 });
+          await page.waitForSelector('article._1_IxNTwqll._1JtmTvRG7Z', { timeout: 2000 });
         } catch (error) {
           console.log("category not clicked", error);
         }
       }
 
-      if (config.debug) {
+      if (config.debug || query.match(/45210/)) {
         await page.screenshot({path: prefix + 'results.png'});
       }
 
@@ -185,6 +185,8 @@ app.get('/run', function(req, res) {
 
         let num = getFreeBrowser();
 
+        console.log('FreeBrowser', num);
+
         if (num == null) {
           result.error = true;
         } else {
@@ -208,9 +210,11 @@ app.get('/run', function(req, res) {
           result.key = key;
         }
       } else {
+        console.log('Error', 'QUERY');
         result.error = true;
       }
     } catch (error) {
+      console.log('Error', error.message);
       result.error = true;
     }
 
@@ -305,7 +309,9 @@ app.get('/restart', function(req, res) {
 });
 
 function getFreeBrowser() {
+  console.log('get free');
   for (let i in BROWSERS) {
+    console.log('i', i);
     if (BROWSERS[i].free) {
       return i;
     }
@@ -330,7 +336,7 @@ async function getBrowser(num) {
     try {
       await page.goto(baseUrl);
 
-      await page.waitForSelector('span.region-form-opener span.header2-menu__text', { timeout: 20000 });
+      await page.waitForSelector('span._14Uuc5WvKg span._1XDx6cGTTP', { timeout: 20000 });
     } catch (error) {
       await BROWSERS[1].browser.close();
       process.exit();
@@ -345,7 +351,7 @@ async function getBrowser(num) {
     return BROWSERS[num];
   }
 
-  const prefix = './log/' + num + '_';
+  const prefix = path.resolve(__dirname, '../logs') + '/' + num + '_';
 
   console.log('create browser ' + num);
 
@@ -373,8 +379,11 @@ async function getBrowser(num) {
   try {
     await page.goto(baseUrl);
 
-    await page.waitForSelector('span.region-form-opener span.header2-menu__text', { timeout: 20000 });
+    //await page.waitForSelector('span.region-form-opener span.header2-menu__text', { timeout: 20000 });
+    await page.waitForSelector('div._5ChREdcMew button.MOYcCv2eIJ._3UND8GjCtL', { timeout: 20000 });
+
   } catch (error) {
+    console.log(error.name, error.message);
     if (error.name == 'TimeoutError') {
       return null;
     }
@@ -384,23 +393,42 @@ async function getBrowser(num) {
     }
   }
 
-  await page.click('span.region-form-opener span.header2-menu__text');
+  console.log('open region select');
+
+  //await page.click('span.region-form-opener span.header2-menu__text');
+  await page.click('div._5ChREdcMew button.MOYcCv2eIJ._3UND8GjCtL');
 
   try {
-    await page.waitForSelector('form.region-select-form', { timeout: 20000 });
+    //await page.waitForSelector('form.region-select-form', { timeout: 20000 });
+    await page.waitForSelector('form._2tiTAye9h1', { timeout: 20000 });
 
-    await page.type('form.region-select-form input.input__control', 'Москва');
+    console.log('form found');
+
+    //await page.type('form.region-select-form input.input__control', 'Москва');
+
+    const input = await page.$('form._2tiTAye9h1 input');
+    await input.click({ clickCount: 3 })
+    await input.type('Москва');
+
   } catch (error) {
     console.log('error: ' + error.name);
     console.log('form not found')
   }
 
+  console.log('push region form');
+
   try {
-    await page.waitForSelector('div.region-suggest__list-item:first-child', { timeout: 20000 });
+    //await page.screenshot({path: prefix + 'page1.png', fullPage: true});
 
-    await page.click('div.region-suggest__list-item:first-child');
+    //await page.waitForSelector('div.region-suggest__list-item:first-child', { timeout: 20000 });
+    await page.waitForSelector('div._2zrCqLZ8zn', { timeout: 20000 });
+    console.log('button found');
 
-    await page.click('button.region-select-form__continue-with-new');
+    //await page.click('div.region-suggest__list-item:first-child');
+    await page.click('div._2zrCqLZ8zn div a:first-child');
+
+    //await page.click('button.region-select-form__continue-with-new');
+    await page.click('button._2EPSjI-GdM._2s55WErgIp.aASzJFnmRI._3OsPkXYN80');
   } catch (error) {
     console.log('error: ' + error.name);
     console.log('Ошибка ' + error.name + ":" + error.message + "\n" + error.stack);
