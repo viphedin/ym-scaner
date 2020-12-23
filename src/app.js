@@ -55,8 +55,8 @@ async function ymSearch(query, num, key) {
 
     try {
       try {
-        await page.waitForSelector('a.n-filter-sorter__link', { timeout: 1000 });
-        await page.click('a.n-filter-sorter__link');
+        await page.waitForSelector('button._2zH77vazcW._3tIaiy1WMf', { timeout: 1000 });
+        await page.click('button._2zH77vazcW._3tIaiy1WMf');
       } catch (error) {
         console.log("sort didn't appear.")
       }
@@ -92,8 +92,8 @@ async function ymSearch(query, num, key) {
 
       try {
         await page.waitForSelector('a.n-pager__button-next', { timeout: 1000 });
-        await page.click('a.n-pager__button-next');
 
+        await page.click('a.n-pager__button-next');
 
         //await page.screenshot({path: prefix + 'market3.png'});
 
@@ -104,7 +104,7 @@ async function ymSearch(query, num, key) {
     } catch (error) {
       console.log('error: ' + error.message);
 
-      save('./result.html', await page.evaluate(() => document.body.innerHTML));
+      //save('./result.html', await page.evaluate(() => document.body.innerHTML));
     }
   } catch (error) {
     console.log('message: ' + error.message);
@@ -210,7 +210,7 @@ app.get('/run', function(req, res) {
           result.key = key;
         }
       } else {
-        console.log('Error', 'QUERY');
+        //console.log('Error', 'QUERY');
         result.error = true;
       }
     } catch (error) {
@@ -285,7 +285,7 @@ app.get('/isfree', function (req, res) {
     }
   }
 
-  console.log('isfree', free);
+  //console.log('isfree', free);
   res.json({
     free: free
   });
@@ -311,7 +311,6 @@ app.get('/restart', function(req, res) {
 function getFreeBrowser() {
   console.log('get free');
   for (let i in BROWSERS) {
-    console.log('i', i);
     if (BROWSERS[i].free) {
       return i;
     }
@@ -326,7 +325,7 @@ async function getBrowser(num) {
   if (typeof BROWSERS[num] != 'undefined') {
     return BROWSERS[num];
   }
-
+/*
   if (typeof BROWSERS[1] != 'undefined') {
     console.log('create page ' + num);
     const page = await BROWSERS[1].browser.newPage();
@@ -350,7 +349,7 @@ async function getBrowser(num) {
 
     return BROWSERS[num];
   }
-
+*/
   const prefix = path.resolve(__dirname, '../logs') + '/' + num + '_';
 
   console.log('create browser ' + num);
